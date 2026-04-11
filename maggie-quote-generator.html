@@ -479,15 +479,26 @@
     <hr class="divider">
 
     <!-- Standard Fees -->
-    <label class="field-label" style="margin-bottom:10px">Additional Fees</label>
-    <div class="extras-row">
-      <label class="checkbox-item">
-        <input type="checkbox" id="f_earlyBird" onchange="updateQuote()">
-        Early Bird Fee (before 7 AM) — $100
-      </label>
-      <div class="number-item">
-        <label class="field-label" style="margin:0;text-transform:none;font-size:0.84rem;color:var(--text)">Additional Artists — $150 each</label>
-        <input type="number" id="f_extraArtist" min="0" max="10" value="0" style="width:56px;text-align:center;padding:5px 6px;" oninput="updateQuote()">
+    <div style="display:flex;align-items:flex-start;gap:32px;flex-wrap:wrap">
+      <div>
+        <label class="field-label" style="margin-bottom:10px">Additional Fees</label>
+        <div class="extras-row">
+          <label class="checkbox-item">
+            <input type="checkbox" id="f_earlyBird" onchange="updateQuote()">
+            Early Bird Fee (before 7 AM) — $100
+          </label>
+          <div class="number-item">
+            <label class="field-label" style="margin:0;text-transform:none;font-size:0.84rem;color:var(--text)">Additional Artists — $150 each</label>
+            <input type="number" id="f_extraArtist" min="0" max="10" value="0" style="width:56px;text-align:center;padding:5px 6px;" oninput="updateQuote()">
+          </div>
+        </div>
+      </div>
+      <div>
+        <label class="field-label" style="margin-bottom:10px">Schedule</label>
+        <div style="display:flex;align-items:center;gap:10px">
+          <label class="field-label" style="margin:0;text-transform:none;font-size:0.84rem;color:var(--text);white-space:nowrap">Get Ready Start Time</label>
+          <input type="text" id="f_startTime" placeholder="e.g. 8:00 AM" style="width:110px;padding:5px 8px;">
+        </div>
       </div>
     </div>
 
@@ -615,7 +626,7 @@ const VENUES = [
   { name: "Snowbasin Resort", miles: 54 },
   { name: "Snowbasin", miles: 54 },
   { name: "The Leonardo", miles: 4 },
-  { name: "Leonardo", miles: 4 },
+  { name: "Walker Farms", miles: 37 },
   { name: "Gallivan Center", miles: 4 },
   { name: "Pierpont Place", miles: 4 },
   { name: "SLC Public Library", miles: 4 },
@@ -1035,6 +1046,7 @@ function clearAll() {
   document.getElementById('f_makeupCount').value = 1;
   document.getElementById('f_earlyBird').checked = false;
   document.getElementById('f_extraArtist').value = 0;
+  document.getElementById('f_startTime').value = '';
   extraItems = [];
   renderExtraItems();
   document.getElementById('f_customDesc').value = '';
@@ -1056,6 +1068,7 @@ function generatePDF() {
   const eventDate = document.getElementById('f_eventDate').value.trim();
   const eventType = document.getElementById('f_eventType').value.trim();
   const readyTime = document.getElementById('f_readyTime').value.trim();
+  const startTime = document.getElementById('f_startTime').value.trim();
   const location = document.getElementById('f_location').value.trim();
   const referral = document.getElementById('f_referral').value.trim();
   const notes = document.getElementById('f_notes').value.trim();
@@ -1174,6 +1187,7 @@ function generatePDF() {
   if (referral) yL = drawInfoBlock('How They Found Me', referral, colL, yL) + 4;
 
   yR = drawInfoBlock('Event Type', eventType, colR, yR) + 4;
+  if (startTime) yR = drawInfoBlock('Get Ready Start Time', startTime, colR, yR) + 4;
   yR = drawInfoBlock('Time to be Ready By', readyTime, colR, yR) + 4;
 
   // Venue photo in right column
@@ -1270,16 +1284,18 @@ function generatePDF() {
   // ── Retainer note ──
   const retainer = Math.ceil(q.total / 2);
   doc.setFillColor(50, 40, 20);
-  doc.roundedRect(14, y, W - 28, 14, 2, 2, 'F');
-  doc.setFontSize(9);
-  doc.setFont('times', 'normal');
+  doc.roundedRect(14, y, W - 28, 20, 2, 2, 'F');
+  doc.setFontSize(13);
+  doc.setFont('times', 'bold');
   doc.setTextColor(...GOLD);
-  doc.text(`50% Non-Refundable Retainer Required to Secure Your Date: ${fmt(retainer)}`, W / 2, y + 5.5, { align: 'center' });
+  doc.text(`50% Non-Refundable Retainer Required to Secure Your Date`, W / 2, y + 7, { align: 'center' });
+  doc.setFontSize(13);
+  doc.setFont('times', 'normal');
+  doc.text(fmt(retainer), W / 2, y + 14, { align: 'center' });
   doc.setFontSize(7.5);
   doc.setTextColor(...MUTED);
-  doc.text('Remaining balance due on the day of your event.', W / 2, y + 11, { align: 'center' });
 
-  y += 22;
+  y += 26;
 
   // ── Notes ──
   if (notes) {
@@ -1297,7 +1313,7 @@ function generatePDF() {
   }
 
   // ── Terms ──
-  const termsY = Math.max(y, 240);
+  const termsY = Math.max(y, 232);
   doc.setDrawColor(...DARK3);
   doc.setLineWidth(0.3);
   doc.line(14, termsY, W - 14, termsY);
@@ -1316,11 +1332,12 @@ function generatePDF() {
     ty += 5;
   }
 
-  // ── Footer logo ──
+  // ── Footer logo — always below terms, above gold bar ──
   if (logoBase64) {
-    const fLogoH = 14;
+    const fLogoH = 10;
     const fLogoW = fLogoH * logoAspect;
-    doc.addImage(logoBase64, 'PNG', W / 2 - fLogoW / 2, 261, fLogoW, fLogoH, '', 'FAST');
+    const fLogoY = Math.max(ty + 3, 265);
+    doc.addImage(logoBase64, 'PNG', W / 2 - fLogoW / 2, fLogoY, fLogoW, fLogoH, '', 'FAST');
   }
 
   // ── Bottom gold bar ──
