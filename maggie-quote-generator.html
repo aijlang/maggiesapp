@@ -1,0 +1,1414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Maggie's Hair & Bridal — Quote Generator</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<style>
+  :root {
+    --gold: #C9A96E;
+    --gold-light: #e0c48a;
+    --dark: #1a1a1a;
+    --dark2: #242424;
+    --dark3: #2e2e2e;
+    --dark4: #383838;
+    --text: #f0ece4;
+    --text-muted: #9a9288;
+    --border: #444;
+    --success: #6abf8a;
+    --error: #e07070;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--dark);
+    color: var(--text);
+    font-family: 'Georgia', serif;
+    min-height: 100vh;
+  }
+
+  /* ── Header ── */
+  .app-header {
+    background: var(--dark2);
+    border-bottom: 2px solid var(--gold);
+    padding: 20px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .app-header h1 {
+    font-size: 1.5rem;
+    color: var(--gold);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    font-weight: normal;
+  }
+  .app-header p {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    letter-spacing: 0.06em;
+    margin-top: 2px;
+  }
+  .header-badge {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    letter-spacing: 0.05em;
+    text-align: right;
+  }
+
+  /* ── Layout ── */
+  .container { max-width: 1100px; margin: 0 auto; padding: 28px 20px 60px; }
+
+  /* ── Settings ── */
+  .settings-toggle {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    padding: 6px 14px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.78rem;
+    letter-spacing: 0.06em;
+    transition: border-color 0.2s, color 0.2s;
+  }
+  .settings-toggle:hover { border-color: var(--gold); color: var(--gold); }
+  .settings-panel {
+    background: var(--dark2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 18px 22px;
+    margin-bottom: 24px;
+    display: none;
+  }
+  .settings-panel.open { display: block; }
+  .settings-panel h3 { font-size: 0.75rem; letter-spacing: 0.1em; color: var(--gold); text-transform: uppercase; margin-bottom: 12px; }
+  .settings-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .settings-row label { font-size: 0.82rem; color: var(--text-muted); min-width: 160px; }
+  .settings-row input { flex: 1; min-width: 260px; }
+
+  /* ── Cards / Sections ── */
+  .card {
+    background: var(--dark2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 24px;
+    margin-bottom: 24px;
+  }
+  .card-title {
+    font-size: 0.7rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 16px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--dark4);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .card-title .step-num {
+    background: var(--gold);
+    color: var(--dark);
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.68rem;
+    font-weight: bold;
+  }
+
+  /* ── Form inputs ── */
+  input, select, textarea {
+    background: var(--dark3);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 5px;
+    padding: 9px 12px;
+    font-size: 0.88rem;
+    font-family: 'Georgia', serif;
+    width: 100%;
+    transition: border-color 0.2s;
+    outline: none;
+  }
+  input:focus, select:focus, textarea:focus { border-color: var(--gold); }
+  input::placeholder, textarea::placeholder { color: var(--text-muted); }
+  select option { background: var(--dark3); }
+  textarea { resize: vertical; }
+
+  label.field-label {
+    display: block;
+    font-size: 0.7rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 5px;
+  }
+
+  .field-group { margin-bottom: 14px; }
+
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+  @media (max-width: 680px) {
+    .grid-2, .grid-3 { grid-template-columns: 1fr; }
+  }
+
+  /* ── Paste area ── */
+  .paste-zone {
+    position: relative;
+  }
+  #pasteInput {
+    min-height: 130px;
+    font-size: 0.82rem;
+    font-family: 'Courier New', monospace;
+    line-height: 1.5;
+    transition: border-color 0.15s, background 0.15s;
+  }
+  .paste-zone.drag-over #pasteInput {
+    border-color: var(--gold);
+    background: rgba(201,169,110,0.07);
+  }
+  .drop-overlay {
+    display: none;
+    position: absolute;
+    inset: 0;
+    border: 2px dashed var(--gold);
+    border-radius: 5px;
+    background: rgba(201,169,110,0.1);
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+    color: var(--gold);
+    letter-spacing: 0.06em;
+    pointer-events: none;
+  }
+  .paste-zone.drag-over .drop-overlay { display: flex; }
+  .parse-row { display: flex; gap: 10px; align-items: flex-start; flex-wrap: wrap; margin-top: 12px; }
+
+  /* ── Buttons ── */
+  .btn {
+    padding: 10px 22px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-family: 'Georgia', serif;
+    font-size: 0.82rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    transition: opacity 0.2s, transform 0.1s;
+    white-space: nowrap;
+  }
+  .btn:active { transform: scale(0.97); }
+  .btn-gold { background: var(--gold); color: var(--dark); font-weight: bold; }
+  .btn-gold:hover { background: var(--gold-light); }
+  .btn-outline { background: transparent; border: 1px solid var(--gold); color: var(--gold); }
+  .btn-outline:hover { background: rgba(201,169,110,0.1); }
+  .btn-sm { padding: 7px 14px; font-size: 0.76rem; }
+
+  /* ── Parse feedback ── */
+  #parseStatus {
+    font-size: 0.78rem;
+    padding: 7px 12px;
+    border-radius: 4px;
+    display: none;
+    align-self: center;
+  }
+  #parseStatus.ok { background: rgba(106,191,138,0.15); border: 1px solid var(--success); color: var(--success); display: block; }
+  #parseStatus.err { background: rgba(224,112,112,0.12); border: 1px solid var(--error); color: var(--error); display: block; }
+
+  /* ── Travel fee panel ── */
+  .travel-panel {
+    background: var(--dark3);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 14px 16px;
+    margin-top: 10px;
+  }
+  .travel-panel .travel-label { font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 6px; }
+  .travel-status {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    margin-top: 8px;
+    min-height: 18px;
+  }
+  .travel-status.found { color: var(--success); }
+  .travel-status.manual { color: var(--gold); }
+
+  /* ── Extras ── */
+  .extras-row { display: flex; gap: 20px; flex-wrap: wrap; align-items: center; }
+  .checkbox-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    font-size: 0.84rem;
+    color: var(--text);
+  }
+  .checkbox-item input[type=checkbox] {
+    width: 16px; height: 16px;
+    cursor: pointer;
+    accent-color: var(--gold);
+  }
+  .number-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.84rem;
+    color: var(--text);
+  }
+  .number-item input[type=number] {
+    width: 56px;
+    text-align: center;
+    padding: 5px 6px;
+  }
+
+  /* ── Extra Services ── */
+  .quickadd-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .btn-quickadd {
+    background: var(--dark3);
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.76rem;
+    font-family: 'Georgia', serif;
+    letter-spacing: 0.04em;
+    transition: border-color 0.15s, color 0.15s;
+  }
+  .btn-quickadd:hover { border-color: var(--gold); color: var(--gold); }
+  .extra-items-list { margin-top: 10px; display: flex; flex-direction: column; gap: 6px; }
+  .extra-item-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--dark3);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    padding: 6px 10px;
+    font-size: 0.84rem;
+  }
+  .extra-item-row .ei-desc { flex: 1; color: var(--text); }
+  .extra-item-row .ei-price { color: var(--gold); min-width: 60px; text-align: right; font-variant-numeric: tabular-nums; }
+  .extra-item-row .ei-remove {
+    background: none; border: none; color: var(--text-muted);
+    cursor: pointer; font-size: 1rem; line-height: 1; padding: 0 2px;
+    transition: color 0.15s;
+  }
+  .extra-item-row .ei-remove:hover { color: var(--error); }
+  .custom-add-row { display: flex; gap: 8px; align-items: flex-end; flex-wrap: wrap; }
+  .custom-add-row .field-group { margin: 0; }
+
+  /* ── Cost summary ── */
+  .cost-summary {
+    background: var(--dark3);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px;
+    margin-top: 6px;
+  }
+  .cost-line {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 5px 0;
+    font-size: 0.88rem;
+  }
+  .cost-line .cost-desc { color: var(--text-muted); }
+  .cost-line .cost-amt { color: var(--text); font-variant-numeric: tabular-nums; }
+  .cost-line.subtotal { border-top: 1px solid var(--border); margin-top: 8px; padding-top: 10px; }
+  .cost-line.total-line {
+    border-top: 2px solid var(--gold);
+    margin-top: 8px;
+    padding-top: 12px;
+    font-size: 1.05rem;
+    color: var(--gold);
+    font-weight: bold;
+  }
+  .cost-line.total-line .cost-amt { color: var(--gold); }
+
+  /* ── Generate PDF button area ── */
+  .generate-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    padding: 20px 0 0;
+  }
+  .retainer-note {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    flex: 1;
+  }
+  .retainer-amt { color: var(--gold); font-size: 0.92rem; }
+
+  /* ── Divider ── */
+  .divider { border: none; border-top: 1px solid var(--dark4); margin: 8px 0 14px; }
+</style>
+</head>
+<body>
+
+<div class="app-header">
+  <div style="display:flex;align-items:center;gap:16px">
+    <img src="logo.png" alt="Maggie's Hair & Bridal" id="appLogo" style="height:100px;width:auto;object-fit:contain;" onerror="this.style.display='none'">
+    <div>
+      <h1>Maggie's Hair &amp; Bridal</h1>
+      <p>Booking Quote Generator</p>
+    </div>
+  </div>
+  <div class="header-badge">maggieshairandbridal.com &nbsp;|&nbsp; SLC, UT</div>
+</div>
+
+<div class="container">
+
+  <!-- Step 1: Paste -->
+  <div class="card">
+    <div class="card-title"><span class="step-num">1</span> Paste FormSubmit Email</div>
+    <label class="field-label">Paste or drag &amp; drop the booking email below</label>
+    <div class="paste-zone" id="pasteZone">
+      <textarea id="pasteInput" placeholder="Paste the booking email content here — or drag a .txt / .eml file onto this area&#10;&#10;Name: Jane Smith&#10;Email: jane@email.com&#10;Phone: (801) 555-1234&#10;Event Date: 06/14/2026&#10;Event Type: Wedding&#10;Time to be ready by: 10:00 AM&#10;Service(s): Hair &amp; Makeup&#10;Hair Services Count: 3&#10;Makeup Services Count: 2&#10;Getting Ready Location: The Grand America, Salt Lake City&#10;How did you hear about me: Instagram"></textarea>
+      <div class="drop-overlay">Drop file here</div>
+    </div>
+    <div class="parse-row">
+      <button class="btn btn-gold" onclick="parseEmail()">Parse &amp; Fill Fields</button>
+      <button class="btn btn-outline btn-sm" onclick="clearAll()">Clear All</button>
+      <span id="parseStatus"></span>
+    </div>
+  </div>
+
+  <!-- Step 2: Quote Builder -->
+  <div class="card">
+    <div class="card-title"><span class="step-num">2</span> Client &amp; Event Details</div>
+
+    <div class="grid-2">
+      <div class="field-group">
+        <label class="field-label">Client Name *</label>
+        <input type="text" id="f_name" placeholder="Jane Smith" oninput="updateQuote()">
+      </div>
+      <div class="field-group">
+        <label class="field-label">Email</label>
+        <input type="email" id="f_email" placeholder="jane@email.com">
+      </div>
+    </div>
+    <div class="grid-3">
+      <div class="field-group">
+        <label class="field-label">Phone</label>
+        <input type="text" id="f_phone" placeholder="(801) 555-1234">
+      </div>
+      <div class="field-group">
+        <label class="field-label">Event Date *</label>
+        <input type="text" id="f_eventDate" placeholder="06/14/2026" oninput="updateQuote()">
+      </div>
+      <div class="field-group">
+        <label class="field-label">Event Type</label>
+        <input type="text" id="f_eventType" placeholder="Wedding, Photoshoot, etc.">
+      </div>
+    </div>
+    <div class="grid-2">
+      <div class="field-group">
+        <label class="field-label">Time to be Ready By</label>
+        <input type="text" id="f_readyTime" placeholder="10:00 AM">
+      </div>
+      <div class="field-group">
+        <label class="field-label">How Did They Hear About You?</label>
+        <input type="text" id="f_referral" placeholder="Instagram, The Knot, etc.">
+      </div>
+    </div>
+    <div class="field-group">
+      <label class="field-label">Getting Ready Location</label>
+      <textarea id="f_location" rows="2" placeholder="Venue name or full address..." oninput="onLocationChange()"></textarea>
+    </div>
+
+    <!-- Travel Fee -->
+    <div class="travel-panel" style="position:relative;padding-right:185px;min-height:110px">
+      <div id="venuePhotoWrap" style="display:none;position:absolute;top:14px;right:16px;bottom:14px;text-align:center">
+        <img id="venuePhoto" src="" alt="" style="width:155px;height:90px;object-fit:cover;border-radius:6px;border:1px solid var(--border);">
+        <div id="venuePhotoName" style="font-size:0.68rem;color:var(--text-muted);margin-top:4px;"></div>
+      </div>
+      <div class="travel-label">Travel Fee Calculation</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:end">
+        <div class="field-group" style="margin:0">
+          <label class="field-label">One-way Miles (RT auto-calculated)</label>
+          <input type="number" id="f_miles" placeholder="e.g. 92.5" min="0" step="any" oninput="onMilesChange()" value="">
+        </div>
+        <div class="field-group" style="margin:0">
+          <button class="btn btn-outline btn-sm" onclick="lookupGoogleMaps()" id="mapsBtn">
+            &#128205; Open in Google Maps
+          </button>
+        </div>
+      </div>
+      <div class="travel-status" id="travelStatus">Enter a location above to calculate travel fee.</div>
+    </div>
+  </div>
+
+  <!-- Step 3: Services -->
+  <div class="card">
+    <div class="card-title"><span class="step-num">3</span> Services &amp; Pricing</div>
+
+    <div class="grid-3">
+      <div class="field-group">
+        <label class="field-label">Service(s)</label>
+        <select id="f_service" onchange="onServiceChange()">
+          <option value="">— Select —</option>
+          <option value="Hair & Makeup">Hair &amp; Makeup</option>
+          <option value="Hair Only">Hair Only</option>
+          <option value="Makeup Only">Makeup Only</option>
+          <option value="Trial">Trial Session</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+      <div class="field-group" id="hairCountGroup" style="display:none">
+        <label class="field-label">Number of Hair Services</label>
+        <input type="number" id="f_hairCount" placeholder="1" min="1" value="1">
+      </div>
+      <div class="field-group" id="makeupCountGroup" style="display:none">
+        <label class="field-label">Number of Makeup Services</label>
+        <input type="number" id="f_makeupCount" placeholder="1" min="1" value="1">
+      </div>
+    </div>
+
+    <hr class="divider">
+
+    <!-- Standard Fees -->
+    <label class="field-label" style="margin-bottom:10px">Additional Fees</label>
+    <div class="extras-row">
+      <label class="checkbox-item">
+        <input type="checkbox" id="f_earlyBird" onchange="updateQuote()">
+        Early Bird Fee (before 7 AM) — $100
+      </label>
+      <div class="number-item">
+        <label class="field-label" style="margin:0;text-transform:none;font-size:0.84rem;color:var(--text)">Additional Artists — $150 each</label>
+        <input type="number" id="f_extraArtist" min="0" max="10" value="0" style="width:56px;text-align:center;padding:5px 6px;" oninput="updateQuote()">
+      </div>
+    </div>
+
+    <hr class="divider" style="margin-top:16px;">
+
+    <!-- Extra Services -->
+    <label class="field-label" style="margin-bottom:8px">Services &amp; Add-Ons</label>
+    <div class="quickadd-grid" id="quickAddGrid">
+      <button class="btn-quickadd" onclick="quickAdd('Bridal Hair & Makeup Package',700)">+ Bridal Hair &amp; Makeup — $700</button>
+      <button class="btn-quickadd" onclick="quickAdd('Bridal Hair',400)">+ Bridal Hair — $400</button>
+      <button class="btn-quickadd" onclick="quickAdd('Bridal Makeup',400)">+ Bridal Makeup — $400</button>
+      <button class="btn-quickadd" onclick="quickAdd('Trial Hair & Makeup',700)">+ Trial Hair &amp; Makeup — $700</button>
+      <button class="btn-quickadd" onclick="quickAdd('Trial Hair',350)">+ Trial Hair — $350</button>
+      <button class="btn-quickadd" onclick="quickAdd('Trial Makeup',350)">+ Trial Makeup — $350</button>
+      <button class="btn-quickadd" onclick="quickAdd('Bridal Party Hair',200)">+ Bridal Party Hair — $200</button>
+      <button class="btn-quickadd" onclick="quickAdd('Bridal Party Makeup',200)">+ Bridal Party Makeup — $200</button>
+      <button class="btn-quickadd" onclick="quickAdd('Flower Girl (12 & under)',120)">+ Flower Girl — $120</button>
+    </div>
+    <div class="custom-add-row">
+      <div class="field-group" style="flex:1;min-width:180px">
+        <label class="field-label">Custom Description</label>
+        <input type="text" id="f_customDesc" placeholder="e.g. Touch-Up Kit">
+      </div>
+      <div class="field-group" style="width:110px">
+        <label class="field-label">Price ($)</label>
+        <input type="number" id="f_customPrice" placeholder="0" min="0" step="1">
+      </div>
+      <button class="btn btn-outline btn-sm" style="margin-bottom:14px" onclick="addCustomItem()">+ Add</button>
+    </div>
+    <div class="extra-items-list" id="extraItemsList"></div>
+
+    <hr class="divider" style="margin-top:16px;">
+
+    <!-- Notes -->
+    <div class="field-group">
+      <label class="field-label">Notes to Client (optional — printed on PDF)</label>
+      <textarea id="f_notes" rows="2" placeholder="Any special notes, reminders, or terms for this client..."></textarea>
+    </div>
+
+    <!-- Cost Summary -->
+    <div class="cost-summary" id="costSummary">
+      <div style="font-size:0.7rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--gold);margin-bottom:12px;">Quote Summary</div>
+      <div id="costLines">
+        <div class="cost-line"><span class="cost-desc">No service selected</span><span class="cost-amt">—</span></div>
+      </div>
+    </div>
+
+    <div class="generate-row">
+      <button class="btn btn-gold" onclick="generatePDF()" style="font-size:0.9rem;padding:12px 28px;">
+        &#8595; Generate PDF Quote
+      </button>
+      <div class="retainer-note">
+        Retainer required: <span class="retainer-amt" id="retainerAmt">—</span>
+        <div style="font-size:0.72rem;margin-top:2px;">50% non-refundable deposit to secure your date</div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /container -->
+
+<script>
+// ── Constants ──────────────────────────────────────────────────────────────
+const STUDIO_ADDRESS = "1033 E 2100 S Unit 207, Salt Lake City, UT 84106";
+const STUDIO_KEYWORDS = ["1033 e 2100", "1033 e. 2100", "studio", "unit 207"];
+
+const VENUES = [
+  { name: "Log Haven", miles: 10 },
+  { name: "Red Butte Garden", miles: 5 },
+  { name: "The Grand America", miles: 3 },
+  { name: "Grand America", miles: 3 },
+  { name: "La Caille", miles: 15 },
+  { name: "Millcreek Inn", miles: 10 },
+  { name: "Memorial House", miles: 5 },
+  { name: "Memory Grove", miles: 5 },
+  { name: "McCune Mansion", miles: 5 },
+  { name: "This Is The Place", miles: 4 },
+  { name: "NHMU", miles: 5 },
+  { name: "Natural History Museum", miles: 5 },
+  { name: "The Commercial Club", miles: 4 },
+  { name: "Commercial Club", miles: 4 },
+  { name: "Twenty & Creek", miles: 14 },
+  { name: "Twenty and Creek", miles: 14 },
+  { name: "Cactus & Tropicals", miles: 18 },
+  { name: "Cactus and Tropicals", miles: 18 },
+  { name: "Highland Gardens", miles: 28 },
+  { name: "Stone Gate", miles: 32 },
+  { name: "Wadley Farms", miles: 35 },
+  { name: "Sleepy Ridge", miles: 38 },
+  { name: "Manor at Riverwoods", miles: 40 },
+  { name: "Riverwoods", miles: 40 },
+  { name: "Conrad Ranch", miles: 42 },
+  { name: "The Startup Building", miles: 44 },
+  { name: "Startup Building", miles: 44 },
+  { name: "Quiet Meadow Farm", miles: 54 },
+  { name: "Knot and Pine", miles: 30 },
+  { name: "Knot & Pine", miles: 30 },
+  { name: "Park City Mountain", miles: 26 },
+  { name: "Canyons Resort", miles: 27 },
+  { name: "Promontory Club", miles: 30 },
+  { name: "Montage Deer Valley", miles: 32 },
+  { name: "Deer Valley Resort", miles: 32 },
+  { name: "Deer Valley", miles: 32 },
+  { name: "St. Regis Deer Valley", miles: 33 },
+  { name: "St Regis", miles: 33 },
+  { name: "High West Refectory", miles: 33 },
+  { name: "High West", miles: 33 },
+  { name: "Blue Sky Ranch", miles: 34 },
+  { name: "Talisker Club", miles: 35 },
+  { name: "River Bottoms Ranch", miles: 35 },
+  { name: "Lodge at Blue Sky", miles: 36 },
+  { name: "High Star Ranch", miles: 42 },
+  { name: "Victory Ranch", miles: 43 },
+  { name: "Zermatt Resort", miles: 45 },
+  { name: "Zermatt", miles: 45 },
+  { name: "Homestead Resort", miles: 46 },
+  { name: "Sundance Resort", miles: 52 },
+  { name: "Sundance", miles: 52 },
+  { name: "Summit at Snowbird", miles: 28 },
+  { name: "Snowbird", miles: 28 },
+  { name: "Alta Lodge", miles: 29 },
+  { name: "Alta", miles: 29 },
+  { name: "The 5th Floor", miles: 37 },
+  { name: "5th Floor", miles: 37 },
+  { name: "The Monarch", miles: 38 },
+  { name: "Snowbasin Resort", miles: 54 },
+  { name: "Snowbasin", miles: 54 },
+  { name: "The Leonardo", miles: 4 },
+  { name: "Leonardo", miles: 4 },
+  { name: "Gallivan Center", miles: 4 },
+  { name: "Pierpont Place", miles: 4 },
+  { name: "SLC Public Library", miles: 4 },
+  { name: "Salt Lake City Library", miles: 4 },
+  { name: "Joseph Smith Building", miles: 4 },
+  { name: "Joseph Smith Bldg", miles: 4 },
+  { name: "Ivy House", miles: 4 },
+  { name: "Rose Establishment", miles: 4 },
+  { name: "Edison St Events", miles: 4 },
+  { name: "Edison Street", miles: 4 },
+  { name: "Utah State Capitol", miles: 5 },
+  { name: "State Capitol", miles: 5 },
+];
+
+// ── Pricing ────────────────────────────────────────────────────────────────
+const PRICE = {
+  brideHairMakeup: 700,
+  brideHairOnly: 400,
+  brideMakeupOnly: 400,
+  trial: 350,
+  partyPerService: 200,
+  flowerGirl: 120,
+  earlyBird: 100,
+  extraArtist: 150,
+  travelBase: 75,
+  travelPerMile: 1,
+};
+
+// ── State ──────────────────────────────────────────────────────────────────
+let currentMiles = 0;
+let travelSource = 'none'; // 'none' | 'studio' | 'venue' | 'maps' | 'manual'
+let extraItems = []; // { desc, amt }
+let logoBase64 = null;
+let logoAspect = 1; // width / height
+
+window.addEventListener('load', () => {
+  const img = new Image();
+  img.crossOrigin = 'anonymous';
+  img.onload = () => {
+    logoAspect = img.naturalWidth / img.naturalHeight;
+    const canvas = document.createElement('canvas');
+    canvas.width = img.naturalWidth;
+    canvas.height = img.naturalHeight;
+    canvas.getContext('2d').drawImage(img, 0, 0);
+    logoBase64 = canvas.toDataURL('image/png');
+  };
+  img.src = 'logo.png';
+});
+
+// ── Extra Services ─────────────────────────────────────────────────────────
+function quickAdd(desc, amt) {
+  extraItems.push({ desc, amt });
+  renderExtraItems();
+  updateQuote();
+}
+
+function addCustomItem() {
+  const desc = document.getElementById('f_customDesc').value.trim();
+  const amt  = parseFloat(document.getElementById('f_customPrice').value) || 0;
+  if (!desc) { document.getElementById('f_customDesc').focus(); return; }
+  extraItems.push({ desc, amt });
+  document.getElementById('f_customDesc').value  = '';
+  document.getElementById('f_customPrice').value = '';
+  renderExtraItems();
+  updateQuote();
+}
+
+function removeExtraItem(i) {
+  extraItems.splice(i, 1);
+  renderExtraItems();
+  updateQuote();
+}
+
+function renderExtraItems() {
+  const list = document.getElementById('extraItemsList');
+  if (!extraItems.length) { list.innerHTML = ''; return; }
+  list.innerHTML = extraItems.map((it, i) => `
+    <div class="extra-item-row">
+      <span class="ei-desc">${it.desc}</span>
+      <span class="ei-price">$${it.amt.toLocaleString()}</span>
+      <button class="ei-remove" onclick="removeExtraItem(${i})" title="Remove">&#x2715;</button>
+    </div>`).join('');
+}
+
+
+// ── Parse ──────────────────────────────────────────────────────────────────
+
+// Normalize a field key: lowercase, strip underscores/spaces/punctuation
+function normKey(k) { return k.toLowerCase().replace(/[_\s\(\)\/]+/g, ''); }
+
+// Known field keys — used to anchor the start of form data in alternating-line format
+const KNOWN_KEYS = new Set([
+  'name','email','phone','eventdate','event_date','eventtype','event_type',
+  'readytime','ready_time','serviceneeded','service_needed',
+  'numberofhairservices','number_of_hair_services','hairservicescount',
+  'numberofmakeupservices','number_of_makeup_services','makeupservicescount',
+  'gettingreadylocation','getting_ready_location',
+  'source','howdidyouhearaboutme','services','service'
+]);
+
+// Build a flat key→value map from pasted text.
+// Handles three formats:
+//   1. Tab-separated (same line):   "Event_Date\t2026-06-06"
+//   2. Colon-separated (same line): "Event Date: 2026-06-06"
+//   3. Alternating lines:           "Event_Date\n2026-06-06\nPhone\n555..."
+//      Robustly finds where form data starts, ignoring any email header noise above it.
+function buildFieldMap(raw) {
+  const lines = raw.split(/\r?\n/)
+    .map(l => l.trim())
+    .filter(l => l &&
+      !/^name\s+value$/i.test(l) &&
+      !/^value$/i.test(l) &&
+      !/^submitted at/i.test(l) &&
+      !/^here.?s what/i.test(l) &&
+      !/^from:/i.test(l) &&
+      !/^to:/i.test(l) &&
+      !/^date:/i.test(l) &&
+      !/^subject:/i.test(l)
+    );
+
+  // Strategy 1: tab-separated pairs on the same line
+  const tabMap = {};
+  for (const line of lines) {
+    const t = line.indexOf('\t');
+    if (t > 0) {
+      const k = normKey(line.slice(0, t).trim());
+      const v = line.slice(t + 1).trim();
+      if (k && v) tabMap[k] = v;
+    }
+  }
+  if (Object.keys(tabMap).length >= 2) return tabMap;
+
+  // Strategy 2: colon-separated pairs on the same line
+  const colonMap = {};
+  for (const line of lines) {
+    const c = line.indexOf(':');
+    if (c > 0 && c < line.length - 1) {
+      const k = normKey(line.slice(0, c).trim());
+      const v = line.slice(c + 1).trim();
+      if (k && v) colonMap[k] = v;
+    }
+  }
+  if (Object.keys(colonMap).length >= 2) return colonMap;
+
+  // Strategy 3: alternating lines (one cell per line — how Gmail copies tables).
+  // IMPORTANT: find where the form data actually starts by locating the first line
+  // that is a known field name. This skips any email subject/header noise at the top.
+  let startIdx = 0;
+  for (let i = 0; i < lines.length; i++) {
+    if (KNOWN_KEYS.has(normKey(lines[i]))) { startIdx = i; break; }
+  }
+  const altMap = {};
+  for (let i = startIdx; i + 1 < lines.length; i += 2) {
+    const k = normKey(lines[i]);
+    const v = lines[i + 1];
+    if (k && v) altMap[k] = v;
+  }
+  return altMap;
+}
+
+// Look up a value from the map trying multiple normalized key aliases
+function getField(map, ...aliases) {
+  for (const a of aliases) {
+    const v = map[normKey(a)];
+    if (v) return v;
+  }
+  return '';
+}
+
+function parseEmail() {
+  const raw = document.getElementById('pasteInput').value.trim();
+  if (!raw) { showStatus('Please paste an email body first.', 'err'); return; }
+
+  const map = buildFieldMap(raw);
+
+  const fields = {
+    name:        getField(map, 'Name', 'Client_Name', 'Full_Name', 'ClientName'),
+    email:       getField(map, 'Email', 'Email_Address', 'EmailAddress'),
+    phone:       getField(map, 'Phone', 'Phone_Number', 'PhoneNumber', 'Cell'),
+    eventDate:   getField(map, 'Event_Date', 'Event Date', 'EventDate', 'Date_of_Event', 'Wedding_Date'),
+    eventType:   getField(map, 'Event_Type', 'Event Type', 'EventType', 'Type_of_Event'),
+    readyTime:   getField(map, 'Ready_Time', 'ReadyTime', 'Time_to_be_ready_by', 'Time to be ready by', 'Ready_by'),
+    service:     getField(map, 'Service_Needed', 'ServiceNeeded', 'Service(s)', 'Services', 'Service'),
+    hairCount:   getField(map, 'Number_of_Hair_Services', 'NumberofHairServices', 'Hair_Services_Count', 'Hair Services Count', 'Hair_Count', 'Number of Hair Services', 'Hair Services', 'Hair'),
+    makeupCount: getField(map, 'Number_of_Makeup_Services', 'NumberofMakeupServices', 'Makeup_Services_Count', 'Makeup Services Count', 'Makeup_Count', 'Number of Makeup Services', 'Makeup Services', 'Makeup'),
+    location:    getField(map, 'Getting_Ready_Location', 'Getting Ready Location', 'GettingReadyLocation', 'Location', 'Venue'),
+    referral:    getField(map, 'Source', 'How_did_you_hear', 'How did you hear about me', 'Referral'),
+  };
+
+  const filled = Object.values(fields).filter(v => v).length;
+  if (filled < 2) {
+    const lineCount = raw.split(/\r?\n/).filter(l => l.trim()).length;
+    const mapSize = Object.keys(buildFieldMap(raw)).length;
+    showStatus(`Could not detect fields (${lineCount} lines found, ${mapSize} pairs matched). Try copying just the table rows from the email — not the whole page.`, 'err');
+    return;
+  }
+
+  if (fields.name)      document.getElementById('f_name').value      = fields.name;
+  if (fields.email)     document.getElementById('f_email').value     = fields.email;
+  if (fields.phone)     document.getElementById('f_phone').value     = fields.phone;
+  if (fields.eventDate) document.getElementById('f_eventDate').value = fields.eventDate;
+  if (fields.eventType) document.getElementById('f_eventType').value = fields.eventType;
+  if (fields.readyTime) document.getElementById('f_readyTime').value = fields.readyTime;
+  if (fields.location)  document.getElementById('f_location').value  = fields.location;
+  if (fields.referral)  document.getElementById('f_referral').value  = fields.referral;
+
+  if (fields.service) {
+    document.getElementById('f_service').value = matchService(fields.service);
+    onServiceChange();
+  }
+  const hc = parseInt(fields.hairCount);
+  const mc = parseInt(fields.makeupCount);
+  if (!isNaN(hc) && hc >= 1) document.getElementById('f_hairCount').value = hc;
+  if (!isNaN(mc) && mc >= 1) document.getElementById('f_makeupCount').value = mc;
+  if (fields.location) onLocationChange();
+
+  showStatus(`Parsed ${filled} field${filled !== 1 ? 's' : ''} successfully.`, 'ok');
+  updateQuote();
+}
+
+function matchService(raw) {
+  const r = raw.toLowerCase();
+  if ((r.includes('hair') && r.includes('makeup')) || r.includes('both')) return 'Hair & Makeup';
+  if (r.includes('hair'))   return 'Hair Only';
+  if (r.includes('makeup')) return 'Makeup Only';
+  if (r.includes('trial'))  return 'Trial';
+  return 'Other';
+}
+
+function showStatus(msg, type) {
+  const el = document.getElementById('parseStatus');
+  el.textContent = msg;
+  el.className = type;
+}
+
+// ── Location / Travel ──────────────────────────────────────────────────────
+function onLocationChange() {
+  const loc = document.getElementById('f_location').value.trim().toLowerCase();
+  if (!loc) {
+    setMiles(0, 'none', 'Enter a location above to calculate travel fee.');
+    return;
+  }
+  // Check if studio
+  if (STUDIO_KEYWORDS.some(kw => loc.includes(kw))) {
+    setMiles(0, 'studio', 'Getting ready at the studio — no travel fee.');
+    return;
+  }
+  // Venue lookup
+  const match = venueMatch(loc);
+  if (match) {
+    const rt = match.miles * 2;
+    setMiles(rt, 'venue', `Matched: ${match.name} — ${match.miles} mi each way = ${rt} mi RT`);
+    showVenuePhoto(match.name);
+    return;
+  }
+  // Unknown — show generic photo if a meaningful location was typed
+  const locRaw = document.getElementById('f_location').value.trim();
+  showVenuePhoto(locRaw, true);
+  setMiles(0, 'manual', 'Venue not in list. Enter miles manually or use Google Maps lookup.');
+}
+
+function venueMatch(locLower) {
+  // Exact / partial name match
+  for (const v of VENUES) {
+    if (locLower.includes(v.name.toLowerCase())) return v;
+  }
+  // Word-level fuzzy: any venue word appears in location
+  for (const v of VENUES) {
+    const words = v.name.toLowerCase().split(/\s+/).filter(w => w.length > 3);
+    if (words.length && words.every(w => locLower.includes(w))) return v;
+  }
+  return null;
+}
+
+function onMilesChange() {
+  const oneway = parseFloat(document.getElementById('f_miles').value) || 0;
+  currentMiles = Math.round(oneway * 2 * 10) / 10; // always store RT internally
+  travelSource = 'manual';
+  const loc = document.getElementById('f_location').value.trim().toLowerCase();
+  if (STUDIO_KEYWORDS.some(kw => loc.includes(kw))) {
+    setTravelStatus('Getting ready at the studio — no travel fee.', 'found');
+  } else if (oneway > 0) {
+    const fee = PRICE.travelBase + currentMiles * PRICE.travelPerMile;
+    setTravelStatus(`${oneway} mi each way = ${currentMiles} mi RT → Travel fee: $${fee.toFixed(2).replace(/\.00$/, '')}`, 'manual');
+  } else {
+    setTravelStatus('Enter one-way miles above — RT calculated automatically.', 'manual');
+  }
+  updateQuote();
+}
+
+function venueNameToFilename(name) {
+  return name.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '') + '.jpg';
+}
+
+function showVenuePhoto(venueName, useGeneric) {
+  const wrap = document.getElementById('venuePhotoWrap');
+  const img  = document.getElementById('venuePhoto');
+  const lbl  = document.getElementById('venuePhotoName');
+  lbl.textContent = venueName || '';
+  if (useGeneric) {
+    img.onerror = null;
+    img.src = 'venue-photos/generic.jpg';
+    wrap.style.display = 'block';
+  } else {
+    const filename = venueNameToFilename(venueName);
+    img.src = 'venue-photos/' + filename;
+    img.onerror = () => { img.onerror = null; img.src = 'venue-photos/generic.jpg'; wrap.style.display = 'block'; };
+    img.onload  = () => { wrap.style.display = 'block'; };
+  }
+}
+
+function hideVenuePhoto() {
+  document.getElementById('venuePhotoWrap').style.display = 'none';
+  document.getElementById('venuePhoto').src = '';
+}
+
+function setMiles(roundTripMiles, source, statusMsg) {
+  currentMiles = roundTripMiles;
+  travelSource = source;
+  // Always display one-way in the field (RT / 2) for consistency
+  document.getElementById('f_miles').value = roundTripMiles > 0 ? roundTripMiles / 2 : '';
+  const cls = (source === 'studio' || source === 'venue') ? 'found' : 'manual';
+  setTravelStatus(statusMsg, cls);
+  if (source === 'none' || source === 'studio') hideVenuePhoto();
+  updateQuote();
+}
+
+function setTravelStatus(msg, cls) {
+  const el = document.getElementById('travelStatus');
+  el.textContent = msg;
+  el.className = 'travel-status ' + cls;
+}
+
+function lookupGoogleMaps() {
+  const loc = document.getElementById('f_location').value.trim();
+  if (!loc) { alert('Please enter a Getting Ready Location first.'); return; }
+  const origin = encodeURIComponent(STUDIO_ADDRESS);
+  const dest = encodeURIComponent(loc);
+  window.open(`https://www.google.com/maps/dir/${origin}/${dest}`, '_blank');
+}
+
+// ── Service UI ─────────────────────────────────────────────────────────────
+function onServiceChange() {
+  const svc = document.getElementById('f_service').value;
+  document.getElementById('hairCountGroup').style.display   = (svc === 'Hair & Makeup' || svc === 'Hair Only')   ? '' : 'none';
+  document.getElementById('makeupCountGroup').style.display = (svc === 'Hair & Makeup' || svc === 'Makeup Only') ? '' : 'none';
+  updateQuote();
+}
+
+// ── Quote Calculation ──────────────────────────────────────────────────────
+function calcQuote() {
+  const earlyBird = document.getElementById('f_earlyBird').checked;
+  const extraArtist = parseInt(document.getElementById('f_extraArtist').value) || 0;
+  const miles = currentMiles;
+  const isStudio = travelSource === 'studio' || (miles === 0 && !document.getElementById('f_location').value.trim());
+
+  const lines = [];
+  if (earlyBird) lines.push({ desc: 'Early Bird Fee (before 7 AM)', amt: PRICE.earlyBird });
+  if (extraArtist > 0) lines.push({ desc: `Additional Artist${extraArtist > 1 ? ` × ${extraArtist}` : ''}`, amt: extraArtist * PRICE.extraArtist });
+  for (const it of extraItems) lines.push({ desc: it.desc, amt: it.amt });
+
+  const servicesTotal = lines.reduce((s, l) => s + l.amt, 0);
+
+  let travelFee = 0;
+  let travelDesc = '';
+  if (!isStudio && miles > 0) {
+    travelFee = PRICE.travelBase + miles * PRICE.travelPerMile;
+    const oneway = miles / 2;
+    travelDesc = `Travel Fee (${oneway} mi × 2 = ${miles} mi RT: $${PRICE.travelBase} base + $${miles})`;
+  }
+
+  const total = servicesTotal + travelFee;
+  return { lines, servicesTotal, travelFee, travelDesc, total, isStudio, miles };
+}
+
+function updateQuote() {
+  const q = calcQuote();
+  const container = document.getElementById('costLines');
+
+  if (!q.lines.length) {
+    container.innerHTML = '<div class="cost-line"><span class="cost-desc">Select a service to see pricing</span><span class="cost-amt">—</span></div>';
+    document.getElementById('retainerAmt').textContent = '—';
+    return;
+  }
+
+  let html = '';
+  for (const l of q.lines) {
+    html += `<div class="cost-line"><span class="cost-desc">${l.desc}</span><span class="cost-amt">$${l.amt.toLocaleString()}</span></div>`;
+  }
+
+  if (q.travelFee > 0) {
+    html += `<div class="cost-line subtotal"><span class="cost-desc">Services Subtotal</span><span class="cost-amt">$${q.servicesTotal.toLocaleString()}</span></div>`;
+    html += `<div class="cost-line"><span class="cost-desc">${q.travelDesc}</span><span class="cost-amt">$${q.travelFee.toLocaleString()}</span></div>`;
+  } else if (q.lines.length > 1) {
+    html += `<div class="cost-line subtotal"><span class="cost-desc">Services Subtotal</span><span class="cost-amt">$${q.servicesTotal.toLocaleString()}</span></div>`;
+    if (q.isStudio || q.miles === 0) {
+      html += `<div class="cost-line"><span class="cost-desc" style="color:var(--success)">Travel Fee — Getting Ready at Studio</span><span class="cost-amt" style="color:var(--success)">$0</span></div>`;
+    }
+  }
+
+  html += `<div class="cost-line total-line"><span>Total</span><span class="cost-amt">$${q.total.toLocaleString()}</span></div>`;
+  container.innerHTML = html;
+
+  const retainer = Math.ceil(q.total / 2);
+  document.getElementById('retainerAmt').textContent = `$${retainer.toLocaleString()} retainer`;
+}
+
+function clearAll() {
+  ['f_name','f_email','f_phone','f_eventDate','f_eventType','f_readyTime',
+   'f_location','f_referral','f_notes','f_otherPrice'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  document.getElementById('pasteInput').value = '';
+  document.getElementById('f_service').value = '';
+  document.getElementById('f_hairCount').value = 1;
+  document.getElementById('f_makeupCount').value = 1;
+  document.getElementById('f_earlyBird').checked = false;
+  document.getElementById('f_extraArtist').value = 0;
+  extraItems = [];
+  renderExtraItems();
+  document.getElementById('f_customDesc').value = '';
+  document.getElementById('f_customPrice').value = '';
+  document.getElementById('parseStatus').className = '';
+  document.getElementById('parseStatus').textContent = '';
+  setMiles(0, 'none', 'Enter a location above to calculate travel fee.');
+  onServiceChange();
+  updateQuote();
+}
+
+// ── PDF Generation ─────────────────────────────────────────────────────────
+function fmt(n) { return '$' + n.toLocaleString(); }
+
+function generatePDF() {
+  const name = document.getElementById('f_name').value.trim() || 'Client';
+  const email = document.getElementById('f_email').value.trim();
+  const phone = document.getElementById('f_phone').value.trim();
+  const eventDate = document.getElementById('f_eventDate').value.trim();
+  const eventType = document.getElementById('f_eventType').value.trim();
+  const readyTime = document.getElementById('f_readyTime').value.trim();
+  const location = document.getElementById('f_location').value.trim();
+  const referral = document.getElementById('f_referral').value.trim();
+  const notes = document.getElementById('f_notes').value.trim();
+
+  const svc = document.getElementById('f_service').value;
+  if (!svc) { alert('Please select a service before generating the PDF.'); return; }
+
+  const q = calcQuote();
+  const today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+
+  // Capture venue photo if shown
+  let venuePhotoB64 = null;
+  let venuePhotoAspect = 1;
+  const venueImg = document.getElementById('venuePhoto');
+  const venueWrap = document.getElementById('venuePhotoWrap');
+  if (venueImg && venueImg.src && venueWrap && venueWrap.style.display !== 'none') {
+    try {
+      const vc = document.createElement('canvas');
+      vc.width = venueImg.naturalWidth || 300;
+      vc.height = venueImg.naturalHeight || 200;
+      vc.getContext('2d').drawImage(venueImg, 0, 0);
+      venuePhotoB64 = vc.toDataURL('image/jpeg', 0.85);
+      venuePhotoAspect = vc.width / vc.height;
+    } catch(e) {}
+  }
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'letter' });
+
+  const W = 215.9; // letter width mm
+  const GOLD = [201, 169, 110];
+  const DARK = [26, 26, 26];
+  const DARK2 = [36, 36, 36];
+  const DARK3 = [46, 46, 46];
+  const WHITE = [240, 236, 228];
+  const MUTED = [154, 146, 136];
+  const GREEN = [106, 191, 138];
+
+  // ── Background ──
+  doc.setFillColor(...DARK);
+  doc.rect(0, 0, W, 279.4, 'F');
+
+  // ── Gold top bar ──
+  doc.setFillColor(...GOLD);
+  doc.rect(0, 0, W, 2, 'F');
+
+  // ── Header block ──
+  doc.setFillColor(...DARK2);
+  doc.rect(0, 2, W, 42, 'F');
+
+  doc.setFillColor(...GOLD);
+  doc.rect(14, 10, 3, 26, 'F'); // left accent bar
+
+  doc.setFont('times', 'normal');
+  doc.setFontSize(22);
+  doc.setTextColor(...GOLD);
+  doc.text("MAGGIE'S HAIR & BRIDAL", 22, 20);
+
+  doc.setFontSize(8.5);
+  doc.setTextColor(...MUTED);
+  doc.text('maggieshairandbridal.com', 22, 26);
+  doc.setTextColor(...MUTED);
+  doc.text('1033 E 2100 S Unit 207, Salt Lake City, UT 84106', 22, 31);
+  doc.text('801-953-5188  \u2022  maggielangdonstylist@gmail.com', 22, 36);
+
+  // Right side of header — logo + date info
+  if (logoBase64) {
+    const logoH = 30;
+    const logoW = logoH * logoAspect;
+    doc.addImage(logoBase64, 'PNG', W - 14 - logoW, 5, logoW, logoH, '', 'FAST');
+  }
+  doc.setFontSize(8);
+  doc.setTextColor(...MUTED);
+  doc.text(`Prepared: ${today}`, W - 14, 36, { align: 'right' });
+  if (eventDate) doc.text(`Event Date: ${eventDate}`, W - 14, 41, { align: 'right' });
+
+  // ── Gold divider ──
+  doc.setDrawColor(...GOLD);
+  doc.setLineWidth(0.5);
+  doc.line(14, 46, W - 14, 46);
+
+  let y = 54;
+
+  // ── Prepared For ──
+  doc.setFontSize(9);
+  doc.setTextColor(...MUTED);
+  doc.setFont('helvetica', 'normal');
+  doc.text('PREPARED FOR', 14, y);
+  y += 8;
+  doc.setFontSize(16);
+  doc.setTextColor(...WHITE);
+  doc.setFont('times', 'normal');
+  doc.text(name, 14, y);
+  y += 10;
+
+  // ── Two-column info ──
+  const colL = 14, colR = W / 2 + 4;
+
+  function drawInfoBlock(label, value, x, yPos) {
+    doc.setFontSize(7.5);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(...MUTED);
+    doc.text(label.toUpperCase(), x, yPos);
+    doc.setFontSize(9.5);
+    doc.setFont('times', 'normal');
+    doc.setTextColor(...WHITE);
+    const lines = doc.splitTextToSize(value || '—', 88);
+    doc.text(lines, x, yPos + 5);
+    return yPos + 5 + lines.length * 5;
+  }
+
+  // Client info (left) | Event info (right)
+  let yL = y, yR = y;
+  yL = drawInfoBlock('Email', email, colL, yL) + 4;
+  yL = drawInfoBlock('Phone', phone, colL, yL) + 4;
+  if (referral) yL = drawInfoBlock('How They Found Me', referral, colL, yL) + 4;
+
+  yR = drawInfoBlock('Event Type', eventType, colR, yR) + 4;
+  yR = drawInfoBlock('Time to be Ready By', readyTime, colR, yR) + 4;
+
+  // Venue photo in right column
+  if (venuePhotoB64) {
+    let vW = W / 2 - 18;
+    let vH = vW / venuePhotoAspect;
+    if (vH > 38) { vH = 38; vW = vH * venuePhotoAspect; }
+    doc.addImage(venuePhotoB64, 'JPEG', colR, yR, vW, vH, '', 'FAST');
+    yR += vH + 4;
+  }
+
+  y = Math.max(yL, yR) + 4;
+
+  // Getting ready location (full width)
+  if (location) {
+    y = drawInfoBlock('Getting Ready Location', location, colL, y) + 6;
+  }
+
+  // ── Section divider ──
+  doc.setDrawColor(...DARK3);
+  doc.setLineWidth(0.3);
+  doc.line(14, y, W - 14, y);
+  y += 8;
+
+  // ── Services header ──
+  doc.setFontSize(8);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(...GOLD);
+  doc.text('SERVICES & FEES', 14, y);
+  y += 6;
+
+  // Build table rows
+  const tableRows = [];
+  for (const l of q.lines) {
+    tableRows.push([l.desc, fmt(l.amt)]);
+  }
+  if (q.travelFee > 0) {
+    tableRows.push([q.travelDesc, fmt(q.travelFee)]);
+  } else if (q.isStudio || q.miles === 0) {
+    tableRows.push(['Travel — Getting Ready at Studio', '$0']);
+  }
+
+  doc.autoTable({
+    startY: y,
+    head: [['Description', 'Amount']],
+    body: tableRows,
+    theme: 'plain',
+    styles: {
+      font: 'times',
+      fontSize: 10,
+      textColor: WHITE,
+      cellPadding: { top: 4, bottom: 4, left: 5, right: 5 },
+    },
+    headStyles: {
+      font: 'helvetica',
+      fontSize: 7.5,
+      textColor: MUTED,
+      fillColor: DARK2,
+      lineWidth: 0,
+      cellPadding: { top: 3, bottom: 3, left: 5, right: 5 },
+    },
+    columnStyles: {
+      0: { cellWidth: 150 },
+      1: { cellWidth: 35, halign: 'right' },
+    },
+    alternateRowStyles: { fillColor: DARK3 },
+    bodyStyles: { fillColor: DARK2 },
+    tableLineColor: DARK3,
+    tableLineWidth: 0.1,
+    margin: { left: 14, right: 14 },
+    didDrawPage: () => {},
+  });
+
+  y = doc.lastAutoTable.finalY + 2;
+
+  // ── Total row ──
+  doc.setFillColor(...DARK2);
+  doc.rect(14, y, W - 28, 12, 'F');
+  doc.setDrawColor(...GOLD);
+  doc.setLineWidth(0.4);
+  doc.line(14, y, W - 14, y);
+
+  doc.setFontSize(11);
+  doc.setFont('times', 'bold');
+  doc.setTextColor(...GOLD);
+  doc.text('TOTAL', 19, y + 8);
+  doc.text(fmt(q.total), W - 19, y + 8, { align: 'right' });
+
+  doc.setDrawColor(...GOLD);
+  doc.line(14, y + 12, W - 14, y + 12);
+
+  y += 20;
+
+  // ── Retainer note ──
+  const retainer = Math.ceil(q.total / 2);
+  doc.setFillColor(50, 40, 20);
+  doc.roundedRect(14, y, W - 28, 14, 2, 2, 'F');
+  doc.setFontSize(9);
+  doc.setFont('times', 'normal');
+  doc.setTextColor(...GOLD);
+  doc.text(`50% Non-Refundable Retainer Required to Secure Your Date: ${fmt(retainer)}`, W / 2, y + 5.5, { align: 'center' });
+  doc.setFontSize(7.5);
+  doc.setTextColor(...MUTED);
+  doc.text('Remaining balance due on the day of your event.', W / 2, y + 11, { align: 'center' });
+
+  y += 22;
+
+  // ── Notes ──
+  if (notes) {
+    doc.setFontSize(7.5);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(...GOLD);
+    doc.text('NOTES', 14, y);
+    y += 5;
+    doc.setFontSize(9);
+    doc.setFont('times', 'normal');
+    doc.setTextColor(...MUTED);
+    const noteLines = doc.splitTextToSize(notes, W - 28);
+    doc.text(noteLines, 14, y);
+    y += noteLines.length * 5 + 6;
+  }
+
+  // ── Terms ──
+  const termsY = Math.max(y, 240);
+  doc.setDrawColor(...DARK3);
+  doc.setLineWidth(0.3);
+  doc.line(14, termsY, W - 14, termsY);
+
+  doc.setFontSize(7.5);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(...MUTED);
+  const terms = [
+    '• A 50% non-refundable retainer is required to officially secure your date.',
+    '• Travel fees apply for all locations outside the studio at 1033 E 2100 S Unit 207, SLC, UT 84106 ($75 base + $1/mile RT).',
+    '• Pricing is subject to change without notice until a retainer is received.',
+  ];
+  let ty = termsY + 6;
+  for (const t of terms) {
+    doc.text(t, 14, ty);
+    ty += 5;
+  }
+
+  // ── Footer logo ──
+  if (logoBase64) {
+    const fLogoH = 14;
+    const fLogoW = fLogoH * logoAspect;
+    doc.addImage(logoBase64, 'PNG', W / 2 - fLogoW / 2, 261, fLogoW, fLogoH, '', 'FAST');
+  }
+
+  // ── Bottom gold bar ──
+  doc.setFillColor(...GOLD);
+  doc.rect(0, 277.4, W, 2, 'F');
+
+  // ── Save ──
+  const safeName = name.replace(/[^a-z0-9]/gi, '_');
+  const safeDate = eventDate.replace(/[^a-z0-9]/gi, '-');
+  doc.save(`${safeName}_Quote_${safeDate || 'undated'}.pdf`);
+}
+
+// ── Paste & Drag & Drop ────────────────────────────────────────────────────
+(function () {
+  const zone     = document.getElementById('pasteZone');
+  const textarea = document.getElementById('pasteInput');
+  const status   = document.getElementById('parseStatus');
+
+  function clearStatus() {
+    status.className = '';
+    status.textContent = '';
+  }
+
+  // Trigger a parse after a short delay (debounced)
+  let _t;
+  function schedParse() {
+    clearTimeout(_t);
+    clearStatus();
+    if (textarea.value.trim().split('\n').length >= 3) {
+      _t = setTimeout(parseEmail, 300);
+    }
+  }
+
+  // ── Auto-parse on BOTH input and paste events ──
+  // 'input'  fires after Ctrl+V and native text drops into the textarea
+  // 'paste'  fires for right-click → Paste (more reliably than input in some browsers)
+  textarea.addEventListener('input', schedParse);
+  textarea.addEventListener('paste', () => { clearStatus(); clearTimeout(_t); _t = setTimeout(parseEmail, 300); });
+
+  // ── Drag visual feedback — zone needs dragover.preventDefault() so the
+  //    cursor shows "copy" anywhere over the box, not just over the textarea ──
+  zone.addEventListener('dragenter', e => { e.preventDefault(); zone.classList.add('drag-over'); });
+  zone.addEventListener('dragover',  e => { e.preventDefault(); });
+  zone.addEventListener('dragleave', e => { if (!zone.contains(e.relatedTarget)) zone.classList.remove('drag-over'); });
+
+  // ── Zone drop: handles files + text drops that land on the wrapper div ──
+  zone.addEventListener('drop', e => {
+    zone.classList.remove('drag-over');
+    e.preventDefault();
+
+    // File (.txt, .eml, etc.)
+    const file = e.dataTransfer.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = ev => { textarea.value = ev.target.result; parseEmail(); };
+      reader.readAsText(file);
+      return;
+    }
+
+    // Text — try reading directly from dataTransfer
+    const text = e.dataTransfer.getData('text/plain') || e.dataTransfer.getData('text');
+    if (text) {
+      textarea.value = text;
+      parseEmail();
+    }
+  });
+
+  // ── Textarea drop: handles drops that land directly on the textarea ──
+  // For text drops: DON'T preventDefault so the browser inserts text natively → input fires
+  // For file drops: handle explicitly
+  textarea.addEventListener('dragover', e => e.preventDefault());
+  textarea.addEventListener('drop', e => {
+    zone.classList.remove('drag-over');
+    const file = e.dataTransfer.files[0];
+    if (file) {
+      e.preventDefault();
+      const reader = new FileReader();
+      reader.onload = ev => { textarea.value = ev.target.result; parseEmail(); };
+      reader.readAsText(file);
+      return;
+    }
+    // Text: don't prevent default — browser puts text in textarea → input event → schedParse
+  });
+})();
+
+// ── Init ───────────────────────────────────────────────────────────────────
+onServiceChange();
+updateQuote();
+</script>
+</body>
+</html>
