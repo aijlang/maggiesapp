@@ -402,11 +402,11 @@
     <div class="grid-3">
       <div class="field-group">
         <label class="field-label">Phone</label>
-        <input type="text" id="f_phone" placeholder="(801) 555-1234">
+        <input type="text" id="f_phone" placeholder="555-555-5555" oninput="fmtPhone(this)" maxlength="12">
       </div>
       <div class="field-group">
         <label class="field-label">Event Date *</label>
-        <input type="text" id="f_eventDate" placeholder="06/14/2026" oninput="updateQuote()">
+        <input type="text" id="f_eventDate" placeholder="06-14-2026" oninput="fmtDate(this);updateQuote()" maxlength="10">
       </div>
       <div class="field-group">
         <label class="field-label">Event Type</label>
@@ -416,7 +416,7 @@
     <div class="grid-2">
       <div class="field-group">
         <label class="field-label">Time to be Ready By</label>
-        <input type="text" id="f_readyTime" placeholder="10:00 AM">
+        <input type="text" id="f_readyTime" placeholder="10:00 AM" oninput="fmtTime(this)" maxlength="8">
       </div>
       <div class="field-group">
         <label class="field-label">How Did They Hear About You?</label>
@@ -650,7 +650,7 @@ const PRICE = {
   partyPerService: 200,
   flowerGirl: 120,
   earlyBird: 100,
-  extraArtist: 150,
+  extraArtist: 200,
   travelBase: 75,
   travelPerMile: 1,
 };
@@ -1281,6 +1281,17 @@ function generatePDF() {
 
   y += 20;
 
+  // ── Page overflow guard — if retainer+terms+footer won't fit, add a new page ──
+  const PAGE_H = 279.4;
+  const NEEDED = 26 + 6 + 20 + 20; // retainer box + gap + terms block + footer
+  if (y + NEEDED > PAGE_H - 8) {
+    doc.addPage();
+    // Re-draw dark background on new page
+    doc.setFillColor(...DARK);
+    doc.rect(0, 0, W, PAGE_H, 'F');
+    y = 18;
+  }
+
   // ── Retainer note ──
   const retainer = Math.ceil(q.total / 2);
   doc.setFillColor(50, 40, 20);
@@ -1313,7 +1324,7 @@ function generatePDF() {
   }
 
   // ── Terms ──
-  const termsY = Math.max(y, 232);
+  const termsY = Math.max(y, Math.min(232, PAGE_H - 55));
   doc.setDrawColor(...DARK3);
   doc.setLineWidth(0.3);
   doc.line(14, termsY, W - 14, termsY);
